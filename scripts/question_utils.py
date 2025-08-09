@@ -18,19 +18,27 @@ def get_file_list():
     return file_list
 
 
+def _to_str(file_list):
+    if isinstance(file_list, list):
+        file_list = "".join(
+            line.decode() if isinstance(line, (bytes, bytearray)) else line
+            for line in file_list
+        )
+    return file_list
+
+
 def get_question_list(file_list: List[str]) -> list:
-    file_list = re.findall("<details>(.*?)</details>", file_list)
-    questions_list = []
-    for i in file_list:
-        q = re.findall(r"<summary>(.*?)</summary>", i)[0]
-        questions_list.append(q)
-    return questions_list
+    file_list = _to_str(file_list)
+    return re.findall("<details>(.*?)</details>", file_list)
 
 
 def get_answered_questions(question_list: List[str]) -> list:
     t = []
-    question_list = re.findall("<details>(.*?)</details>", question_list)
-    for i in question_list:
+    if isinstance(question_list, list):
+        details = question_list
+    else:
+        details = re.findall("<details>(.*?)</details>", question_list)
+    for i in details:
         q = re.findall(r"<summary>(.*?)</summary>", i)
         if q and q[0] == "":
             continue
@@ -66,7 +74,7 @@ def get_challenges_count() -> int:
 def get_random_question(question_list: List[str], with_answer=False):
     if with_answer:
         return choice(get_answered_questions(question_list))
-    return choice(get_question_list(question_list))
+    return re.findall(r"<summary>(.*?)</summary>", choice(get_question_list(question_list)))[0]
 
 
 """Use this question_list. Unless you have already opened/worked/need the file, then don't or
